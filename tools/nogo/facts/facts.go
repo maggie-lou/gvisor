@@ -106,9 +106,15 @@ func (p *Package) Serialize(w io.Writer) error {
 		if err != nil {
 			continue // Not exported; expected.
 		}
+		// Sort each object's facts by package path, then type name
+		sortedFacts := append([]analysis.Fact(nil), facts...)
+		sort.Slice(sortedFacts, func(i, j int) bool {
+			a, b := reflect.TypeOf(sortedFacts[i]).Elem(), reflect.TypeOf(sortedFacts[j]).Elem()
+			return a.PkgPath()+"."+a.Name() < b.PkgPath()+"."+b.Name()
+		})
 		is = append(is, item{
 			Key:   string(name),
-			Value: facts,
+			Value: sortedFacts,
 		})
 	}
 	return writeItems(w, is)
@@ -191,7 +197,13 @@ func NewBundle() *Bundle {
 // Serialize implements Serializer.Serialize.
 func (b *Bundle) Serialize(w io.Writer) error {
 	zw := zip.NewWriter(w)
-	for pkg, facts := range b.decoded {
+	packages := make([]string, 0, len(b.decoded))
+	for pkg := range b.decoded {
+		packages = append(packages, pkg)
+	}
+	sort.Strings(packages)
+	for _, pkg := range packages {
+		facts := b.decoded[pkg]
 		if facts == nil {
 			// Some facts may be omitted for bundles, if there is
 			// only type information but no source information. We

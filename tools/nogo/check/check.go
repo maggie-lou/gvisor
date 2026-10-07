@@ -946,7 +946,13 @@ func Bundle(sources map[string][]string, roots []string) (FindingSet, facts.Seri
 		imports:   make(map[string]*types.Package),
 		analyzers: allAnalyzers,
 	}
+	// Keep file-set positions stable by visiting packages in a fixed order.
+	packages := make([]string, 0, len(sources))
 	for pkg := range sources {
+		packages = append(packages, pkg)
+	}
+	slices.Sort(packages)
+	for _, pkg := range packages {
 		// Was there an error processing this package?
 		if _, err := i.importPackage(pkg, ""); err != nil {
 			return nil, nil, err

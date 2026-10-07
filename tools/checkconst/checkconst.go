@@ -21,6 +21,7 @@
 package checkconst
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -56,6 +57,17 @@ type Constants struct {
 	Offsets    map[string]int64
 	Sizes      map[string]int64
 	Values     map[string]string
+}
+
+// GobEncode serializes constant facts with a stable map key order.
+// JSON sorts map keys, whereas the default gob map encoding does not.
+func (c *Constants) GobEncode() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+// GobDecode restores facts serialized by GobEncode.
+func (c *Constants) GobDecode(data []byte) error {
+	return json.Unmarshal(data, c)
 }
 
 // AFact implements analysis.Fact.AFact.
