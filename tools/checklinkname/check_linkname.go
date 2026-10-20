@@ -16,6 +16,7 @@
 package checklinkname
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -91,6 +92,16 @@ type ResolvedSymbols symbolMap
 // AFact implements analysis.Fact.AFact.
 func (*ResolvedSymbols) AFact() {}
 
+// GobEncode serializes symbol facts with a stable package and symbol order.
+func (s *ResolvedSymbols) GobEncode() ([]byte, error) {
+	return json.Marshal(s)
+}
+
+// GobDecode restores facts serialized by GobEncode.
+func (s *ResolvedSymbols) GobDecode(data []byte) error {
+	return json.Unmarshal(data, s)
+}
+
 // merge merges all known symbols.
 func (r *ResolvedSymbols) merge(pass *analysis.Pass, other ResolvedSymbols, resolvePos func(pkgName, symbolName string) token.Pos) {
 	((*symbolMap)(r)).mergeOrResolve(pass, (symbolMap)(other), true /* merge */, resolvePos)
@@ -101,6 +112,16 @@ type UnresolvedLinknames symbolMap
 
 // AFact implements analysis.Fact.AFact.
 func (*UnresolvedLinknames) AFact() {}
+
+// GobEncode serializes symbol facts with a stable package and symbol order.
+func (s *UnresolvedLinknames) GobEncode() ([]byte, error) {
+	return json.Marshal(s)
+}
+
+// GobDecode restores facts serialized by GobEncode.
+func (s *UnresolvedLinknames) GobDecode(data []byte) error {
+	return json.Unmarshal(data, s)
+}
 
 // merge merges all unknown symbols.
 func (u *UnresolvedLinknames) merge(pass *analysis.Pass, other UnresolvedLinknames, resolvePos func(pkgName, symbolName string) token.Pos) {
